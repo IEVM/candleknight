@@ -9,6 +9,11 @@ class Character {
         this.frameY = frameY;
         this.speed = speed;
     }
+
+    collision(character2) {
+        let character1 = this;
+        return character1.x === character2.x && character1.y === character2.y
+    }
 }
 
 class Enemy extends Character {
@@ -67,20 +72,12 @@ const enemy1Sprite = new Image();
 enemy1Sprite.src = "js/src/Skelett.png";
 
 /////////////////////////////////////////////////////////////////////////////////////
-//                        PLAYERVARIABLEN
-let position = 0;
-let enemies = [] //Gegner-Speicher
-const projectiles = []
-var activeKey = 0;
-var walkLeft = 0;
-var walkUp = 0;
-var walkRight = 0;
-var walkDown = 0;
-context.fillStyle = "white";
-var enemyPosX = 0;
-var enemyPosY = 0;
-var enemySpeed = 1;
-var enemySpawnCounter = 0;
+//                        GLOBALEVARIABLEN
+let enemies = []; //Gegner-Speicher
+let walkLeft = 0;
+let walkUp = 0;
+let walkRight = 0;
+let walkDown = 0;
 let lastUpdate = new Date();
 let tps = 60;
 
@@ -148,16 +145,16 @@ function walkDirection() {
 function animate() {
     context.clearRect(0, 0, canvas.width, canvas.height); //Alles löschen
     context.drawImage(background, 0, 0, canvas.width, canvas.height); //Hintergrund
-    playerDirection() //Spieler Blickrichtung
-    walkDirection() //Spieler Lauf-Aktion
+    playerDirection(); //Spieler Blickrichtung
     drawSprite(player.sprite, player.side, 0, player.width, player.height, player.x, player.y, 100, 120); //Spieler
     requestAnimationFrame(animate);
     let updateFlag = new Date() - lastUpdate > 1000 / tps;
     if (updateFlag) {
+        walkDirection(); //Spieler Lauf-Aktion
         lastUpdate = new Date();
     }
 
-    enemies = enemies.filter(enemy => enemy.x !== player.x || enemy.y !== player.y);
+    enemies = enemies.filter(enemy => !enemy.collision(player));
 
     enemies.forEach((enemy) => {
         if (updateFlag) {
@@ -177,16 +174,43 @@ function playerDirection() {
 }
 
 function spawnEnemies(enemyType) {
-    setInterval(() => {
-        let enemy = new Enemy(
-            enemyType,
-            (Math.random() < 0.5) ? 0 : canvas.width,
-            (Math.random() < 0.5) ? 0 : canvas.height,
-            500,
-            716,
-            0,
-            0,
-            3);
-        enemies.push(enemy);
-    }, 2000)
+    setInterval(() => spawnEnemy("Skeleton"), 2000)
+}
+
+function spawnEnemy(identifier, x, y) {
+    switch (identifier) {
+        case "Skeleton": {
+            enemies.push(
+                new Enemy(
+                enemy1Sprite,
+                x || (Math.random() < 0.5) ? 0 : canvas.width,
+                y || (Math.random() < 0.5) ? 0 : canvas.height,
+                500,
+                716,
+                0,
+                0,
+                1)
+            );
+            break;
+        }
+
+        case "Mage": {
+            enemies.push(
+                new Enemy(
+                    enemy2Sprite,
+                    x || (Math.random() < 0.5) ? 0 : canvas.width,
+                    y || (Math.random() < 0.5) ? 0 : canvas.height,
+                    500,
+                    716,
+                    0,
+                    0,
+                    3)
+            );
+            break;
+        }
+
+        default: {
+            console.log("Not a valid enemy.");
+        }
+    }
 }
